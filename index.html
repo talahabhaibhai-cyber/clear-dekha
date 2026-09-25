@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clear Dekha - HD Share</title>
+<style>
+ body{margin:0; font-family:sans-serif; background:#0f0f0f; color:white; display:flex; justify-content:center; align-items:center; min-height:100vh;}
+.box{background:#1e1e1e; padding:25px; border-radius:20px; width:90%; max-width:380px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);}
+ button{width:100%; padding:16px; margin-top:12px; font-size:19px; font-weight:bold; border:none; border-radius:12px; cursor:pointer;}
+ #onBtn{background:#00d084; color:white;}
+ #offBtn{background:#ff3b30; color:white;}
+ #status{margin-top:18px; background:#2a2a2a; padding:12px; border-radius:10px; font-size:17px;}
+ video{width:100%; margin-top:18px; border-radius:12px; background:black; min-height:200px;}
+ #linkBox{display:none; margin-top:15px; background:#2a2a2a; padding:12px; border-radius:10px; word-break:break-all;}
+</style>
+</head>
+<body>
+<div class="box">
+ <h2 style="margin:0;">Clear Dekha</h2>
+ <p style="opacity:0.7;">HD Screen Share</p>
+
+ <button id="onBtn" onclick="startShare()">ON - চালু করুন</button>
+ <button id="offBtn" onclick="stopShare()">OFF - বন্ধ করুন</button>
+
+ <div id="status">Status: OFF</div>
+ <video id="video" autoplay muted playsinline></video>
+
+ <div id="linkBox">
+  আপনার লাইভ লিংক:<br>
+  <b id="shareLink" style="color:#00d084; font-size:16px;"></b>
+ </div>
+</div>
+
+<script>
+let stream = null;
+async function startShare(){
+ try{
+  stream = await navigator.mediaDevices.getDisplayMedia({video:true, audio:false});
+  document.getElementById('video').srcObject = stream;
+  document.getElementById('status').innerText = "🔴 ON - লাইভ চলছে";
+  document.getElementById('status').style.background = "#3a1f1f";
+
+  let id = Math.floor(Math.random()*90000)+10000;
+  document.getElementById('shareLink').innerText = "https://meet.jit.si/clear-dekha-"+id;
+  document.getElementById('linkBox').style.display = "block";
+
+  stream.getVideoTracks()[0].onended = function(){ stopShare(); };
+ }catch(err){
+  alert("আপনি Allow দেন নাই ভাই, আবার ON চাপ দিয়ে Allow দিন");
+ }
+}
+function stopShare(){
+ if(stream){
+  stream.getTracks().forEach(track => track.stop());
+ }
+ document.getElementById('video').srcObject = null;
+ document.getElementById('status').innerText = "Status: OFF - বন্ধ";
+ document.getElementById('status').style.background = "#2a2a2a";
+ document.getElementById('linkBox').style.display = "none";
+}
+</script>
+</body>
+</html>
