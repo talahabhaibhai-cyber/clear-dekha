@@ -3,117 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clear Dekha - Live Screen</title>
+<title>Clear Dekha</title>
+<script src='https://meet.jit.si/external_api.js'></script>
 <style>
-body{margin:0;background:#0a0a0a;color:white;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:15px}
-.box{background:#1e1e1e;width:100%;max-width:400px;border-radius:20px;padding:25px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-h2{margin:0 0 5px 0}
-input{width:90%;padding:14px;margin-top:10px;border-radius:10px;border:none;background:#2c2c2c;color:white;font-size:16px;text-align:center}
-button{width:95%;padding:15px;margin-top:12px;border:none;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer}
-#hostBtn{background:#00d084;color:white}
-#joinBtn{background:#2d6aff;color:white}
-#stopBtn{background:#ff3c3c;color:white;display:none}
-#status{background:#2a2a2a;padding:12px;border-radius:10px;margin-top:15px;font-weight:bold}
-#linkArea{display:none;background:#111;padding:15px;border-radius:12px;margin-top:15px;word-break:break-all}
-#video{width:100%;margin-top:15px;border-radius:12px;background:black;display:none}
-small{opacity:0.6}
+body{background:#000;color:#fff;text-align:center;font-family:sans-serif;padding:10px;overflow-x:hidden}
+.box{background:#151515;border:1px solid #333;border-radius:20px;padding:20px;margin-top:10px}
+input{width:90%;padding:18px;font-size:22px;border-radius:12px;border:none;text-align:center;background:#222;color:#fff;outline:none;border:2px solid #00ff00}
+#linkBox{display:none;background:#111;padding:15px;border-radius:12px;margin:15px 0;border:1px dashed #00ff00;color:#00ff00;word-break:break-all;font-size:14px}
+button{width:95%;padding:18px;font-size:20px;font-weight:bold;border-radius:14px;border:none;margin-top:10px}
+#onBtn{background:#00ff00;color:#000}
+#offBtn{background:#ff0000;color:#fff;display:none}
+#copyBtn{background:#0088ff;color:#fff;display:none;font-size:16px;padding:12px}
+#jitsi{background:#000;width:100%;height:1px;opacity:0.01;overflow:hidden}
+.live{color:#ff0000;font-weight:bold}
+/* টাচ দেখানোর গোল */
+#touchDot{position:fixed;width:40px;height:40px;border:3px solid #ff0000;background:rgba(255,0,0,0.3);border-radius:50%;pointer-events:none;display:none;z-index:999999;transform:translate(-50%,-50%)}
 </style>
 </head>
 <body>
+
+<div id="touchDot"></div>
+
+<h2>📱 Clear Dekha</h2>
+
 <div class="box">
-<h2>Clear Dekha</h2>
-<small>লাইভ স্ক্রিন শেয়ার</small>
+<p>১. নাম্বার দিন</p>
+<input type="number" id="num" placeholder="যেমন 12345" oninput="makeLink()">
 
-<input id="roomInput" placeholder="রুম নাম্বার লিখুন (যেমন 1234)">
+<div id="linkBox"></div>
+<button id="copyBtn" onclick="copyLink()">🔗 লিংক কপি করুন - যাকে দেখাবেন তাকে দিন</button>
 
-<button id="hostBtn" onclick="beHost()">ON - আমি দেখাবো (Host)</button>
-<button id="joinBtn" onclick="beViewer()">আমি দেখবো (Viewer)</button>
-<button id="stopBtn" onclick="stopAll()">OFF - বন্ধ করুন</button>
+<p style="margin-top:20px">২. ON / OFF</p>
+<button id="onBtn" onclick="goON()">🟢 ON করুন</button>
+<button id="offBtn" onclick="goOFF()">🔴 OFF করুন</button>
 
-<div id="status">Status: OFF</div>
-
-<div id="linkArea">
-<p>এই লিংকটি যাকে দিবেন সে আপনার স্ক্রিন দেখতে পারবে:</p>
-<b id="liveLink" style="color:#00d084;font-size:18px"></b>
-<p><small>লিংক কপি করে WhatsApp / Messenger এ শেয়ার করুন</small></p>
+<p id="st">OFF আছে</p>
+<p style="font-size:12px;color:#888;margin-top:10px">টিপস: মোবাইলের Settings > Developer options > Show taps ON করলে পুরা মোবাইলের টাচ সব জায়গায় দেখা যাবে</p>
 </div>
 
-<div id="jitsiBox" style="width:100%;height:400px;margin-top:15px;display:none;border-radius:12px;overflow:hidden"></div>
+<div id="jitsi"></div>
 
-</div>
-
-<script src="https://meet.jit.si/external_api.js"></script>
 <script>
-let api = null;
-let roomName = "";
+let api=null;
+let roomName="";
 
-function makeRoom(){
- let r = document.getElementById('roomInput').value.trim();
- if(r===""){
-  r = "clear-dekha-"+Math.floor(Math.random()*90000+10000);
- }
- return r;
+// টাচ দেখানোর জন্য
+const dot=document.getElementById('touchDot');
+document.addEventListener('touchstart',e=>{
+ dot.style.display='block';
+ dot.style.left=e.touches[0].clientX+'px';
+ dot.style.top=e.touches[0].clientY+'px';
+});
+document.addEventListener('touchmove',e=>{
+ dot.style.left=e.touches[0].clientX+'px';
+ dot.style.top=e.touches[0].clientY+'px';
+});
+document.addEventListener('touchend',e=>{
+ setTimeout(()=>{dot.style.display='none'},300);
+});
+
+function makeLink(){
+ let n=document.getElementById('num').value;
+ if(n.length < 2){return}
+ roomName="clear-dekha-"+n;
+ let link="https://talahabhaibhai-cyber.github.io/clear-dekha/?room="+roomName;
+ let b=document.getElementById('linkBox');
+ b.style.display='block';
+ b.innerText=link;
+ document.getElementById('copyBtn').style.display='block';
 }
 
-function beHost(){
- roomName = makeRoom();
- document.getElementById('roomInput').value = roomName;
- let link = "https://talahabhaibhai-cyber.github.io/clear-dekha/?room="+roomName;
- document.getElementById('liveLink').innerText = link;
- document.getElementById('linkArea').style.display = "block";
- document.getElementById('jitsiBox').style.display = "block";
- document.getElementById('status').innerText = "🔴 LIVE ON - আপনি দেখাচ্ছেন: "+roomName;
- document.getElementById('hostBtn').style.display="none";
- document.getElementById('joinBtn').style.display="none";
- document.getElementById('stopBtn').style.display="block";
+function copyLink(){
+ let t=document.getElementById('linkBox').innerText;
+ navigator.clipboard.writeText(t);
+ alert("লিংক কপি হইছে ভাই, এখন পাঠাই দেন");
+}
 
- // Start Jitsi as host with screenshare
- api = new JitsiMeetExternalAPI("meet.jit.si", {
-  roomName: roomName,
-  parentNode: document.querySelector('#jitsiBox'),
-  width: '100%',
-  height: 400,
-  configOverwrite:{ startWithVideoMuted:false, startScreenSharing:true, prejoinPageEnabled:false },
-  interfaceConfigOverwrite:{ SHOW_JITSI_WATERMARK:false }
+function goON(){
+ let n=document.getElementById('num').value;
+ if(!n){alert("আগে উপরে নাম্বার দিন ভাই");return}
+ if(!roomName){makeLink();}
+ document.getElementById('st').innerText="ON হচ্ছে... Allow দিন";
+
+ const domain="meet.jit.si";
+ const options={
+  roomName:roomName,
+  parentNode:document.getElementById('jitsi'),
+  configOverwrite:{startWithAudioMuted:true,prejoinPageEnabled:false},
+  userInfo:{displayName:"Mobile"}
+ };
+ api=new JitsiMeetExternalAPI(domain,options);
+ api.addEventListener('videoConferenceJoined',()=>{
+   setTimeout(()=>{api.executeCommand('toggleShareScreen');},1200);
+   document.getElementById('onBtn').style.display='none';
+   document.getElementById('offBtn').style.display='block';
+   document.getElementById('st').innerHTML="<span class='live'>🔴 LIVE ON - আপনার স্ক্রিন দেখা যাচ্ছে</span>";
  });
 }
 
-function beViewer(){
- roomName = document.getElementById('roomInput').value.trim();
- if(roomName===""){ alert("ভাই রুম নাম্বার বা লিংকের নাম্বারটা লিখুন"); return; }
- document.getElementById('jitsiBox').style.display = "block";
- document.getElementById('status').innerText = "👀 আপনি দেখছেন: "+roomName;
- document.getElementById('hostBtn').style.display="none";
- document.getElementById('joinBtn').style.display="none";
- document.getElementById('stopBtn').style.display="block";
-
- api = new JitsiMeetExternalAPI("meet.jit.si", {
-  roomName: roomName,
-  parentNode: document.querySelector('#jitsiBox'),
-  width: '100%',
-  height: 400,
-  configOverwrite:{ prejoinPageEnabled:false },
-  interfaceConfigOverwrite:{ SHOW_JITSI_WATERMARK:false }
- });
+function goOFF(){
+ if(api) api.dispose();
+ location.reload();
 }
 
-function stopAll(){
- if(api){ api.dispose(); }
- document.getElementById('jitsiBox').style.display="none";
- document.getElementById('linkArea').style.display="none";
- document.getElementById('status').innerText="Status: OFF";
- document.getElementById('hostBtn').style.display="block";
- document.getElementById('joinBtn').style.display="block";
- document.getElementById('stopBtn').style.display="none";
-}
-
-// যদি লিংক দিয়ে কেউ আসে, auto join
-window.onload = function(){
- let p = new URLSearchParams(window.location.search);
- let r = p.get('room');
- if(r){
-  document.getElementById('roomInput').value = r;
-  beViewer();
+let p=new URLSearchParams(window.location.search);
+let r=p.get('room');
+if(r){
+ document.getElementById('num').value=r.replace('clear-dekha-','');
+ makeLink();
+ document.getElementById('num').disabled=true;
+ document.getElementById('copyBtn').style.display='none';
+ document.getElementById('linkBox').style.display='none';
+ document.getElementById('onBtn').innerText="👁️ দেখার জন্য Join দিন";
+ document.getElementById('onBtn').onclick=function(){
+   document.getElementById('jitsi').style.height='100vh';
+   document.getElementById('jitsi').style.opacity='1';
+   document.getElementById('jitsi').style.position='fixed';
+   document.getElementById('jitsi').style.top='0';
+   document.getElementById('jitsi').style.left='0';
+   document.getElementById('jitsi').style.zIndex='9999';
+   new JitsiMeetExternalAPI("meet.jit.si",{roomName:r,parentNode:document.getElementById('jitsi')});
  }
 }
 </script>
