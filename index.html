@@ -1,62 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="bn">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Clear Dekha</title>
-<script src='https://meet.jit.si/external_api.js'></script>
+<title>Clear Dekha - ScreenStream Style</title>
+<script src="https://meet.jit.si/external_api.js"></script>
 <style>
-body{background:#0a0a0a;color:#fff;font-family:sans-serif;text-align:center;margin:0;padding:20px}
-h1{color:#00ff00}
-.box{background:#1a1a1a;padding:25px;border-radius:20px;margin-top:20px}
-input{width:90%;padding:16px;font-size:20px;border-radius:10px;text-align:center;border:2px solid #00ff00;background:#000;color:#fff}
-#link{margin:15px 0;padding:12px;background:#000;border:1px dashed #00ff00;color:#00ff00;word-break:break-all;display:none;border-radius:10px}
-button{width:95%;padding:16px;font-size:18px;font-weight:bold;border-radius:12px;border:none;margin-top:10px}
-.on{background:#00ff00;color:#000}
-.off{background:#ff0000;color:#fff;display:none}
-#view{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:9999;display:none}
+body{margin:0;background:#000;color:#fff;font-family:sans-serif;text-align:center;padding:15px}
+h2{color:#00ff00;margin-bottom:10px}
+.box{background:#111;border:1px solid #222;border-radius:18px;padding:18px;max-width:400px;margin:0 auto}
+.opts{display:flex;gap:8px;margin:12px 0}
+.opts button{flex:1;padding:12px;border-radius:10px;border:1px solid #333;background:#222;color:#fff;font-weight:bold}
+.opts button.active{background:#00ff00;color:#000;border-color:#00ff00}
+input{width:90%;padding:14px;border-radius:10px;border:2px solid #00ff00;background:#000;color:#fff;text-align:center;font-size:18px;margin-top:10px}
+#linkBox{display:none;margin-top:12px;padding:10px;background:#000;border:1px dashed #00ff00;color:#00ff00;border-radius:10px;word-break:break-all}
+#copyBtn{display:none;width:100%;padding:12px;background:#222;color:#00ff00;border:1px solid #00ff00;border-radius:10px;margin-top:8px}
+#onBtn{width:100%;padding:16px;background:#00ff00;color:#000;font-weight:bold;border-radius:12px;border:none;margin-top:14px;font-size:18px}
+#offBtn{display:none;width:100%;padding:16px;background:#ff0000;color:#fff;font-weight:bold;border-radius:12px;border:none;margin-top:14px;font-size:18px}
+#status{margin-top:10px;color:#aaa}
+#screenView{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999;display:none}
 </style>
 </head>
 <body>
-<h1>📱 Clear Dekha</h1>
+<h2>📱 Clear Dekha</h2>
 <div id="main" class="box">
-<p>আপনার ID লিখুন</p>
-<input id="idInput" type="number" placeholder="যেমন 75907225" oninput="gen()">
-<div id="link"></div>
-<button class="on" onclick="start()">🟢 ON করুন</button>
-<button id="offBtn" class="off" onclick="location.reload()">🔴 OFF করুন</button>
-<p id="st">OFF আছে</p>
+  <p>৩ টা থেকে ১ টা সিলেক্ট করুন</p>
+  <div class="opts">
+    <button onclick="sel(this,'tab')">Tab</button>
+    <button id="mid" class="active" onclick="sel(this,'screen')">Full Screen</button>
+    <button onclick="sel(this,'window')">Window</button>
+  </div>
+  <input id="idInput" type="number" placeholder="ID লিখুন যেমন 75907225" oninput="makeLink()">
+  <div id="linkBox"></div>
+  <button id="copyBtn" onclick="copyLink()">🔗 লিংক কপি করুন</button>
+  <button id="onBtn" onclick="goOn()">🟢 ON করুন</button>
+  <button id="offBtn" onclick="goOff()">🔴 OFF করুন (বন্ধ)</button>
+  <div id="status">OFF আছে</div>
 </div>
-<div id="view"></div>
+<div id="screenView"></div>
 
 <script>
-let api=null;
-function gen(){
+let mode='screen';
+function sel(el,m){mode=m;document.querySelectorAll('.opts button').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function makeLink(){
  let v=document.getElementById('idInput').value;
  if(v.length<3)return;
- let url=location.origin+location.pathname+"?id="+v;
- document.getElementById('link').style.display='block';
- document.getElementById('link').innerText=url;
+ let link=location.origin+location.pathname+"?id="+v;
+ let lb=document.getElementById('linkBox');
+ lb.style.display='block';
+ lb.innerText=link;
+ document.getElementById('copyBtn').style.display='block';
 }
-function start(){
+function copyLink(){
+ let t=document.getElementById('linkBox').innerText;
+ navigator.clipboard.writeText(t);
+ alert('লিংক কপি হয়েছে ভাই: '+t);
+}
+let api=null;
+function goOn(){
  let v=document.getElementById('idInput').value;
- if(!v){alert('আগে ID দিন ভাই');return}
+ if(!v){alert('আগে ID লিখুন ভাই');return}
  let room="clear-dekha-"+v;
- document.getElementById('st').innerText="Allow চাপ দিন...";
- api=new JitsiMeetExternalAPI("meet.jit.si",{roomName:room,parentNode:document.getElementById('view'),configOverwrite:{prejoinPageEnabled:false,startWithAudioMuted:true}});
- document.getElementById('view').style.display='block';
- document.getElementById('main').style.display='none';
- api.addEventListener('videoConferenceJoined',()=>{
-  setTimeout(()=>api.executeCommand('toggleShareScreen'),1000);
- });
+ document.getElementById('status').innerText="Allow দিন...";
+ document.getElementById('screenView').style.display='block';
+ document.getElementById('onBtn').style.display='none';
+ document.getElementById('offBtn').style.display='block';
+ api=new JitsiMeetExternalAPI("meet.jit.si",{roomName:room,parentNode:document.getElementById('screenView'),configOverwrite:{prejoinPageEnabled:false,startWithAudioMuted:true}});
+ api.addEventListener('videoConferenceJoined',()=>{setTimeout(()=>api.executeCommand('toggleShareScreen'),800);document.getElementById('status').innerText="🔴 LIVE চলছে";});
 }
-// যদি লিংক দিয়ে কেউ ঢুকে ?id= বা ?room= দিয়ে
+function goOff(){location.reload();}
 let p=new URLSearchParams(location.search);
-let id=p.get('id')||p.get('room');
+let id=p.get('id');
 if(id){
- let room=id.startsWith('clear-dekha-')?id:'clear-dekha-'+id;
- document.body.innerHTML='<div id="view" style="width:100%;height:100vh"></div>';
- new JitsiMeetExternalAPI("meet.jit.si",{roomName:room,parentNode:document.getElementById('view')});
+ let room="clear-dekha-"+id;
+ document.body.innerHTML='<div id="screenView" style="width:100%;height:100vh;display:block"></div>';
+ new JitsiMeetExternalAPI("meet.jit.si",{roomName:room,parentNode:document.getElementById('screenView')});
 }
 </script>
 </body>
