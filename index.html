@@ -1,80 +1,78 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Clear Dekha</title><script src="https://meet.jit.si/external_api.js"></script>
-<style>body{background:#0a0a0a;color:#fff;text-align:center;font-family:sans-serif;padding:15px;margin:0}
-.box{background:#151515;border:1px solid #222;border-radius:20px;padding:25px;max-width:380px;margin:30px auto}
-input{width:90%;padding:16px;border-radius:12px;border:2px solid #00ff00;background:#000;color:#fff;text-align:center;font-size:22px;letter-spacing:2px;outline:none}
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clear Dekha</title>
+<script src="https://meet.jit.si/external_api.js"></script>
+<style>
+body{background:#000;color:#fff;text-align:center;font-family:sans-serif;margin:0;padding:15px}
+.box{background:#111;border:1px solid #222;border-radius:20px;padding:25px;max-width:380px;margin:40px auto}
+input{width:90%;padding:16px;border-radius:12px;border:2px solid #00ff00;background:#000;color:#fff;text-align:center;font-size:22px;outline:none}
 #linkBox{display:none;margin-top:15px;padding:12px;background:#000;border:1px dashed #00ff00;color:#00ff00;border-radius:12px;word-break:break-all;font-size:13px}
-button{width:100%;padding:16px;border-radius:12px;border:none;font-weight:bold;font-size:18px;margin-top:15px;cursor:pointer}
-#onBtn{background:#00ff00;color:#000}
-#joinBtn{background:#00ff00;color:#000}
-#offBtn{background:#ff1a1a;color:#fff;display:none}
+button{width:100%;padding:16px;border-radius:12px;border:none;font-weight:bold;font-size:18px;margin-top:15px}
+#on{background:#00ff00;color:#000}
+#off{background:red;color:#fff;display:none}
 #view{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:none;z-index:999}
-.small{color:#888;font-size:13px;margin-top:10px}
-</style></head><body>
+</style>
+</head>
+<body>
 
 <div id="main">
 <h2 style="color:#00ff00">📱 Clear Dekha</h2>
-<div class="box" id="shareBox">
-<p>আপনার কোড বসান</p>
-<input id="codeInput" type="tel" placeholder="যেমন 75907225">
+<div class="box" id="sBox">
+<input id="code" type="tel" placeholder="কোড লিখুন ex: 75907">
 <div id="linkBox"></div>
-<button id="onBtn" onclick="startShare()">🟢 ONE - Share ON করুন</button>
-<button id="offBtn" onclick="location.reload()">🔴 OFF করুন</button>
-<p id="status" class="small">OFF আছে</p>
-</div>
-
-<div class="box" id="viewBox" style="display:none">
-<p>কোড অটো বসে গেছে</p>
-<input id="viewCode" type="tel" readonly>
-<button id="joinBtn" onclick="joinView()">👁️ JOIN - Screen দেখুন</button>
-<p class="small">JOIN চাপ দিলেই লাইভ দেখতে পারবেন</p>
+<button id="on" onclick="share()">🟢 ONE - ON করুন</button>
+<button id="off" onclick="location.reload()">🔴 OFF করুন</button>
+<p id="st" style="color:#888">OFF আছে</p>
 </div>
 </div>
 
 <div id="view"></div>
 
 <script>
-const codeInput=document.getElementById('codeInput');
-const linkBox=document.getElementById('linkBox');
-const shareBox=document.getElementById('shareBox');
-const viewBox=document.getElementById('viewBox');
-const viewCode=document.getElementById('viewCode');
+const codeEl=document.getElementById('code');
+const linkEl=document.getElementById('linkBox');
 
-// লিংক বানানো
-codeInput.addEventListener('input',()=>{
- let v=codeInput.value.trim();
- if(v.length<3){linkBox.style.display='none';return;}
- let link=location.origin+location.pathname+"?id="+v;
- linkBox.style.display='block';
- linkBox.innerText=link;
+codeEl.addEventListener('input',()=>{
+ let v=codeEl.value.trim();
+ if(v.length<2){linkEl.style.display='none';return;}
+ let l=location.origin+location.pathname+"?id="+v;
+ linkEl.style.display='block';
+ linkEl.innerText=l;
 });
 
-function startShare(){
- let v=codeInput.value.trim();
- if(!v){alert('আগে কোড বসান ভাই');return;}
+function share(){
+ let v=codeEl.value.trim();
+ if(!v) return alert('কোড লিখেন ভাই');
  document.getElementById('view').style.display='block';
- document.getElementById('onBtn').style.display='none';
- document.getElementById('offBtn').style.display='block';
- document.getElementById('status').innerText='🔴 LIVE চলছে - Allow দিন';
- let api=new JitsiMeetExternalAPI("meet.jit.si",{roomName:"clear-"+v,parentNode:document.getElementById('view'),configOverwrite:{prejoinPageEnabled:false}});
+ document.getElementById('on').style.display='none';
+ document.getElementById('off').style.display='block';
+ document.getElementById('st').innerText='🔴 LIVE চলছে...';
+ let api=new JitsiMeetExternalAPI("meet.jit.si",{
+  roomName:"clear-"+v,
+  parentNode:document.getElementById('view'),
+  configOverwrite:{prejoinPageEnabled:false,startWithAudioMuted:true,startWithVideoMuted:true},
+  interfaceConfigOverwrite:{MOBILE_APP_PROMO:false,SHOW_JITSI_WATERMARK:false,SHOW_WATERMARK_FOR_GUESTS:false}
+ });
  api.addEventListener('videoConferenceJoined',()=>{setTimeout(()=>api.executeCommand('toggleShareScreen'),1000);});
 }
 
-function joinView(){
- let v=viewCode.value.trim();
+// Viewer - লিংকে চাপ দিলেই অটো দেখা যাবে, কোন JOIN লাগবে না
+let p=new URLSearchParams(location.search);
+let id=p.get('id');
+if(id){
+ document.getElementById('sBox').style.display='none';
  document.getElementById('view').style.display='block';
  document.getElementById('view').style.height='100vh';
- new JitsiMeetExternalAPI("meet.jit.si",{roomName:"clear-"+v,parentNode:document.getElementById('view'),configOverwrite:{prejoinPageEnabled:false}});
+ new JitsiMeetExternalAPI("meet.jit.si",{
+  roomName:"clear-"+id,
+  parentNode:document.getElementById('view'),
+  configOverwrite:{prejoinPageEnabled:false,startWithAudioMuted:true,startWithVideoMuted:true},
+  interfaceConfigOverwrite:{MOBILE_APP_PROMO:false,SHOW_JITSI_WATERMARK:false,SHOW_WATERMARK_FOR_GUESTS:false}
+ });
 }
-
-// যদি লিংকে id থাকে - অটো কোড বসে যাবে
-let params=new URLSearchParams(location.search);
-let id=params.get('id');
-if(id){
- shareBox.style.display='none';
- viewBox.style.display='block';
- viewCode.value=id;
- document.getElementById('main').querySelector('h2').innerText='📱 Screen দেখুন';
-}
-</script></body></html>
+</script>
+</body>
+</html>
